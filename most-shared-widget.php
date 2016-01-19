@@ -2,9 +2,9 @@
 
 /*
 Plugin Name: Most Shared Posts Widget
-Plugin URI: http://sitepoint.com
+Plugin URI: http://github.com/digimix/most-shared-posts
 Description: Displays most shared posts in an widget
-Author: Narayan Prusty
+Author: Christine Cardoso + Narayan Prusty
 */
 
 function msp_is_post()
