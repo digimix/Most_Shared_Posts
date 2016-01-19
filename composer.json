@@ -20,6 +20,5 @@
             "email": "michael@digimix.co",
             "homepage": "https://digimix.co"
         }
-    ],
-    "minimum-stability": "dev"
+    ]
 }
