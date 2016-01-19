@@ -9,7 +9,9 @@
     "authors": [
         {
             "name": "Christine Cardoso",
-            "email": "christine@digimix.co"
+            "email": "christine@digimix.co",
+            "name": "Michael Salafia",
+            "email": "michael@digimix.co"
         }
     ],
     "minimum-stability": "dev"
