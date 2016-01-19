@@ -7,6 +7,8 @@ Description: Displays most shared posts in an widget
 Author: Christine Cardoso + Narayan Prusty
 */
 
+
+
 function msp_is_post() {
 	if(is_single() && !is_attachment()) {
 	    global $post;
@@ -24,6 +26,23 @@ function msp_is_post() {
 }
 
 add_action("wp", "msp_is_post");
+
+
+/**
+ * Register thumbnail sizes.
+ *
+ * @return void
+ */
+function mostshared_add_image_size() {
+	$sizes = get_option( 'mostshared_thumb_sizes' );
+	if ( $sizes ) {
+		foreach ( $sizes as $id => $size ) {
+			add_image_size( 'mostshared_thumb_size' . $id, $size[0], $size[1], true );
+		}
+	}
+}
+add_action( 'init',  'mostshared_add_image_size' );
+
 
 function msp_update($id) {
 	$url = get_permalink($id);
@@ -57,6 +76,10 @@ function msp_update($id) {
 	update_post_meta($id, "msp_last_update", time());
 }
 
+/**
+ * Adds Most_Shared widget.
+ */
+
 class Most_Shared_Post_Widget extends WP_Widget {
 
 	/**
@@ -71,73 +94,6 @@ class Most_Shared_Post_Widget extends WP_Widget {
     }
 
 	/**
-	 * Back-end widget form.
-	 *
-	 * @see WP_Widget::form()
-	 *
-	 * @param array $instance Previously saved values from database.
-	 */
-    public function form($instance) {
-		// Output admin widget options form
-		$title 			= ! empty( $instance['title'] ) ? $instance['title'] : __( '', 'text_domain' );
-		$number 		= ! empty( $instance['number'] ) ? $instance['number'] : __( '5', 'text_domain' );
-		$thumb 			= ! empty( $instance['thumb'] ) ? $instance['thumb'] : __( 'checked', 'text_domain' );
-		$thumb_w 		= ! empty( $instance['thumb_w'] ) ? $instance['thumb_w'] : __( '36', 'text_domain' );
-		$thumb_h 		= ! empty( $instance['thumb_h'] ) ? $instance['thumb_h'] : __( '36', 'text_domain' );
-        ?>
-
-		<p>
-			<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:' ); ?></label>
-			<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>">
-		</p>
-		<p>
-			<label for="<?php echo $this->get_field_id( 'number' ); ?>"><?php _e( 'Number of posts to show:' ); ?></label>
-			<input class="tiny-text" id="<?php echo $this->get_field_id( 'number' ); ?>" name="<?php echo $this->get_field_name( 'number' ); ?>" type="number" step="1" min="1" size="3" value="<?php echo esc_attr( $number ); ?>">
-		</p>
-		<?php if ( function_exists( 'the_post_thumbnail' ) && current_theme_supports( "post-thumbnails" ) ) : ?>
-			<p>
-				<label for="<?php echo $this->get_field_id( 'thumb' ); ?>">
-					<input type="checkbox" class="checkbox" id="<?php echo $this->get_field_id('thumb'); ?>" name="<?php echo $this->get_field_name('thumb'); ?>"<?php checked( ( bool ) esc_attr( $thumb ), true ); ?> />
-					<?php _e( 'Show post thumbnail' ); ?>
-				</label>
-			</p>
-			<p>
-				<label>
-					<?php _e( 'Thumbnail dimensions (in pixels)' ); ?>:<br />
-					<label for="<?php echo $this->get_field_id( "thumb_w" ); ?>">
-						Width: <input class="widefat" style="width:30%;" type="text" id="<?php echo $this->get_field_id( "thumb_w" ); ?>" name="<?php echo $this->get_field_name( "thumb_w" ); ?>" value="<?php echo esc_attr( $thumb_w ); ?>" />
-					</label>
-
-					<label for="<?php echo $this->get_field_id( "thumb_h" ); ?>">
-						Height: <input class="widefat" style="width:30%;" type="text" id="<?php echo $this->get_field_id( "thumb_h" ); ?>" name="<?php echo $this->get_field_name( "thumb_h" ); ?>" value="<?php echo esc_attr( $thumb_h ); ?>" />
-					</label>
-				</label>
-			</p>
-		<?php endif; ?>
-
-        <?php
-    }
-
-    public function update($new_instance, $old_instance)
-    {
-        $instance = $old_instance;
-		$instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
-		$instance['number'] = ( ! empty( $new_instance['number'] ) ) ? strip_tags( $new_instance['number'] ) : '';
-		$instance['thumb'] = ( ! empty( $new_instance['thumb'] ) ) ? strip_tags( $new_instance['thumb'] ) : '';
-		$instance['thumb_w'] = ( ! empty( $new_instance['thumb_w'] ) ) ? strip_tags( $new_instance['thumb_w'] ) : '';
-		$instance['thumb_h'] = ( ! empty( $new_instance['thumb_h'] ) ) ? strip_tags( $new_instance['thumb_h'] ) : '';
-
-		$sizes = get_option( 'mostshared_thumb_sizes' );
-		if ( !$sizes ) {
-			$sizes = array( );
-		}
-		$sizes[$this->id] = array( $new_instance['thumb_w'], $new_instance['thumb_h'] );
-		update_option( 'mostshared_thumb_sizes', $sizes );
-
-        return $instance;
-    }
-
-	/**
 	 * Front-end display of widget.
 	 *
 	 * @see WP_Widget::widget()
@@ -149,14 +105,15 @@ class Most_Shared_Post_Widget extends WP_Widget {
         extract($args);
 		$sizes = get_option( 'mostshared_thumb_sizes' );
 
-        $title = apply_filters('widget_title', $instance['title']);
         echo $before_widget;
 
-        if( ! empty($title) ) {
-            echo $before_title . $title . $after_title;
-        }
+		// Widget Title
+		if ( ! empty( $instance['title'] ) ) {
+			$title = apply_filters( 'widget_title', $instance['title'] );
+			echo $args['before_title'] . $title . $args['after_title'];
+		}
 
-		$posts = get_transient("msp");
+		$posts = get_transient('msp');
 
 		if($posts === false) {
 
@@ -208,7 +165,84 @@ class Most_Shared_Post_Widget extends WP_Widget {
 
         echo $after_widget;
     }
+
+
+	/**
+	 * Update widget
+	 *
+	 * @see WP_Widget::form()
+	 *
+	 * @param array $instance Previously saved values from database.
+	 */
+
+    public function update($new_instance, $old_instance) {
+        $instance = array();
+		$instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
+		$instance['number'] = ( ! empty( $new_instance['number'] ) ) ? strip_tags( $new_instance['number'] ) : '';
+		$instance['thumb'] = ( ! empty( $new_instance['thumb'] ) ) ? strip_tags( $new_instance['thumb'] ) : '';
+		$instance['thumb_w'] = ( ! empty( $new_instance['thumb_w'] ) ) ? strip_tags( $new_instance['thumb_w'] ) : '';
+		$instance['thumb_h'] = ( ! empty( $new_instance['thumb_h'] ) ) ? strip_tags( $new_instance['thumb_h'] ) : '';
+
+		$sizes = get_option( 'mostshared_thumb_sizes' );
+		if ( !$sizes ) {
+			$sizes = array( );
+		}
+		$sizes[$this->id] = array( $new_instance['thumb_w'], $new_instance['thumb_h'] );
+		update_option( 'mostshared_thumb_sizes', $sizes );
+
+        return $instance;
+    }
+
+	/**
+	 * Back-end widget form.
+	 *
+	 * @see WP_Widget::form()
+	 *
+	 * @param array $instance Previously saved values from database.
+	 */
+    public function form($instance) {
+		// Output admin widget options form
+		$title 			= ! empty( $instance['title'] ) ? $instance['title'] : __( '', 'text_domain' );
+		$number 		= ! empty( $instance['number'] ) ? $instance['number'] : __( '5', 'text_domain' );
+		$thumb 			= ! empty( $instance['thumb'] ) ? $instance['thumb'] : __( 'checked', 'text_domain' );
+		$thumb_w 		= ! empty( $instance['thumb_w'] ) ? $instance['thumb_w'] : __( '36', 'text_domain' );
+		$thumb_h 		= ! empty( $instance['thumb_h'] ) ? $instance['thumb_h'] : __( '36', 'text_domain' );
+        ?>
+
+		<p>
+			<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:' ); ?></label>
+			<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>">
+		</p>
+		<p>
+			<label for="<?php echo $this->get_field_id( 'number' ); ?>"><?php _e( 'Number of posts to show:' ); ?></label>
+			<input class="tiny-text" id="<?php echo $this->get_field_id( 'number' ); ?>" name="<?php echo $this->get_field_name( 'number' ); ?>" type="number" step="1" min="1" size="3" value="<?php echo esc_attr( $number ); ?>">
+		</p>
+		<?php if ( function_exists( 'the_post_thumbnail' ) && current_theme_supports( "post-thumbnails" ) ) : ?>
+			<p>
+				<label for="<?php echo $this->get_field_id( 'thumb' ); ?>">
+					<input type="checkbox" class="checkbox" id="<?php echo $this->get_field_id('thumb'); ?>" name="<?php echo $this->get_field_name('thumb'); ?>"<?php checked( ( bool ) esc_attr( $thumb ), true ); ?> />
+					<?php _e( 'Show post thumbnail' ); ?>
+				</label>
+			</p>
+			<p>
+				<label>
+					<?php _e( 'Thumbnail dimensions (in pixels)' ); ?>:<br />
+					<label for="<?php echo $this->get_field_id( "thumb_w" ); ?>">
+						Width: <input class="widefat" style="width:30%;" type="text" id="<?php echo $this->get_field_id( "thumb_w" ); ?>" name="<?php echo $this->get_field_name( "thumb_w" ); ?>" value="<?php echo esc_attr( $thumb_w ); ?>" />
+					</label>
+
+					<label for="<?php echo $this->get_field_id( "thumb_h" ); ?>">
+						Height: <input class="widefat" style="width:30%;" type="text" id="<?php echo $this->get_field_id( "thumb_h" ); ?>" name="<?php echo $this->get_field_name( "thumb_h" ); ?>" value="<?php echo esc_attr( $thumb_h ); ?>" />
+					</label>
+				</label>
+			</p>
+		<?php endif; ?>
+
+        <?php
+    }
 }
+
+
 
 function msp_register_most_shared_widget() {
   register_widget('Most_Shared_Post_Widget');
@@ -217,20 +251,6 @@ function msp_register_most_shared_widget() {
 add_action('widgets_init', 'msp_register_most_shared_widget');
 
 
-/**
- * Register thumbnail sizes.
- *
- * @return void
- */
-function mostshared_add_image_size() {
-	$sizes = get_option( 'mostshared_thumb_sizes' );
-	if ( $sizes ) {
-		foreach ( $sizes as $id => $size ) {
-			add_image_size( 'mostshared_thumb_size' . $id, $size[0], $size[1], true );
-		}
-	}
-}
-add_action( 'init',  'mostshared_add_image_size' );
 
 
 
