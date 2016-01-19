@@ -3,17 +3,22 @@
     "description": "WordPress plugin for a widget that displays a list of post with the most shares on Facebook.",
     "type": "wordpress-plugin",
     "require": {
-        "johnpbloch/wordpress": ">=4.4.1"
+        "php": ">=5.5"
     },
+    "version": "1.0.0",
+    "keywords": ["wordpress"],
+    "homepage": "https://github.com/digimix/most-shared-posts",
     "license": "MIT",
     "authors": [
         {
             "name": "Christine Cardoso",
-            "email": "christine@digimix.co"
+            "email": "christine@digimix.co",
+            "homepage": "https://digimix.co"
         },
         {
 	        "name": "Michael Salafia",
-            "email": "michael@digimix.co"
+            "email": "michael@digimix.co",
+            "homepage": "https://digimix.co"
         }
     ],
     "minimum-stability": "dev"
